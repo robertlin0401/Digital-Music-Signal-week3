@@ -12,16 +12,30 @@
 //==============================================================================
 Week3AudioProcessor::Week3AudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
+     : AudioProcessor(BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ),
+     tree(*this, nullptr, "PARAM",
+          std::make_unique<juce::AudioParameterFloat>("level",
+                                                      "Level",
+                                                      juce::NormalisableRange<float>(0.0f, 1.0f, 0.1f), 0.5f,
+                                                      juce::String(),
+                                                      juce::AudioProcessorParameter::genericParameter,
+                                                      [](float value, int){return juce::String(value);},
+                                                      [](juce::String text){ return text.getFloatValue();}))
 #endif
 {
+    mySynth.clearSounds();
+    mySynth.addSound(new SynthSound());
+    
+    mySynth.clearVoices();
+    for (int i = 0; i < 5; i++)
+        mySynth.addVoice(new SynthVoice());
 }
 
 Week3AudioProcessor::~Week3AudioProcessor()
@@ -77,24 +91,26 @@ int Week3AudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void Week3AudioProcessor::setCurrentProgram (int index)
+void Week3AudioProcessor::setCurrentProgram(int index)
 {
 }
 
-const juce::String Week3AudioProcessor::getProgramName (int index)
+const juce::String Week3AudioProcessor::getProgramName(int index)
 {
     return {};
 }
 
-void Week3AudioProcessor::changeProgramName (int index, const juce::String& newName)
+void Week3AudioProcessor::changeProgramName(int index, const juce::String& newName)
 {
 }
 
 //==============================================================================
-void Week3AudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void Week3AudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    lastSampleRate = sampleRate;
+    mySynth.setCurrentPlaybackSampleRate(sampleRate);
 }
 
 void Week3AudioProcessor::releaseResources()
@@ -104,7 +120,7 @@ void Week3AudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool Week3AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool Week3AudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
   #if JucePlugin_IsMidiEffect
     juce::ignoreUnused (layouts);
@@ -129,33 +145,20 @@ bool Week3AudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) co
 }
 #endif
 
-void Week3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void Week3AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
+    
+    for (int i = 0; i < mySynth.getNumVoices(); i++) {
+        auto* myVoice = dynamic_cast<SynthVoice*>(mySynth.getVoice(i));
+        myVoice->setLevel(tree.getRawParameterValue("level")->load());
     }
+    mySynth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
 //==============================================================================
@@ -166,18 +169,18 @@ bool Week3AudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Week3AudioProcessor::createEditor()
 {
-    return new Week3AudioProcessorEditor (*this);
+    return new Week3AudioProcessorEditor(*this);
 }
 
 //==============================================================================
-void Week3AudioProcessor::getStateInformation (juce::MemoryBlock& destData)
+void Week3AudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
 }
 
-void Week3AudioProcessor::setStateInformation (const void* data, int sizeInBytes)
+void Week3AudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.

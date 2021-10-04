@@ -10,12 +10,21 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-Week3AudioProcessorEditor::Week3AudioProcessorEditor (Week3AudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p)
+Week3AudioProcessorEditor::Week3AudioProcessorEditor(Week3AudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (400, 300);
+    setSize(400, 300);
+    levelSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
+    levelSlider.setValue(0.5);
+    levelSlider.setTextBoxStyle(juce::Slider::TextBoxLeft,
+                                true,
+                                levelSlider.getTextBoxWidth(),
+                                levelSlider.getTextBoxHeight());
+    levelSliderAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(audioProcessor.tree, "level", levelSlider));
+    
+    addAndMakeVisible(levelSlider);
 }
 
 Week3AudioProcessorEditor::~Week3AudioProcessorEditor()
@@ -23,18 +32,26 @@ Week3AudioProcessorEditor::~Week3AudioProcessorEditor()
 }
 
 //==============================================================================
-void Week3AudioProcessorEditor::paint (juce::Graphics& g)
+void Week3AudioProcessorEditor::paint(juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    g.setColour (juce::Colours::white);
-    g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
+    g.setColour(juce::Colours::white);
+    int x = 50;
+    int y = 100;
+    int width = 50;
+    int height = levelSlider.getHeight();
+    
+    g.drawFittedText("Level", x, y, width, height, juce::Justification::centred, 1);
 }
 
 void Week3AudioProcessorEditor::resized()
 {
-    // This is generally where you'll want to lay out the positions of any
-    // subcomponents in your editor..
+    auto area = getLocalBounds();
+    int sliderWidth = area.getWidth() / 2;
+    int sliderHeight = area.getHeight() / 4;
+    int x = 100;
+    int y = 100;
+    
+    levelSlider.setBounds(x, y, sliderWidth, sliderHeight);
 }
