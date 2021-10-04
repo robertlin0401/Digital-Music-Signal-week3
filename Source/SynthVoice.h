@@ -28,6 +28,8 @@ public:
     void renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int startSample, int numSamples) override;
     
     void setLevel(float newLevel);
+
+    void setMode(int newMode);
     
 private:
     float level;

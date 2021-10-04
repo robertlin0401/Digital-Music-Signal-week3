@@ -20,14 +20,18 @@ Week3AudioProcessor::Week3AudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        ),
-     tree(*this, nullptr, "PARAM",
+     tree(*this, nullptr, "PARAM", {
           std::make_unique<juce::AudioParameterFloat>("level",
                                                       "Level",
                                                       juce::NormalisableRange<float>(0.0f, 1.0f, 0.1f), 0.5f,
                                                       juce::String(),
                                                       juce::AudioProcessorParameter::genericParameter,
-                                                      [](float value, int){return juce::String(value);},
-                                                      [](juce::String text){ return text.getFloatValue();}))
+                                                      [](float value, int){ return juce::String(value); },
+                                                      [](juce::String text){ return text.getFloatValue(); }),
+          std::make_unique<juce::AudioParameterChoice>("mode",
+                                                       "Mode",
+                                                       juce::StringArray({ "sine", "square", "triangle", "sawtooth" }), 0)
+          })
 #endif
 {
     mySynth.clearSounds();
@@ -157,6 +161,7 @@ void Week3AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     for (int i = 0; i < mySynth.getNumVoices(); i++) {
         auto* myVoice = dynamic_cast<SynthVoice*>(mySynth.getVoice(i));
         myVoice->setLevel(tree.getRawParameterValue("level")->load());
+        myVoice->setMode(tree.getRawParameterValue("mode")->load());
     }
     mySynth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }

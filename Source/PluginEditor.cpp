@@ -28,7 +28,7 @@ Week3AudioProcessorEditor::Week3AudioProcessorEditor(Week3AudioProcessor& p)
     comboBox.addItem("square", 2);
     comboBox.addItem("triangle", 3);
     comboBox.addItem("sawtooth", 4);
-    comboBox.setSelectedId(1);
+    modeComboBoxAttachment.reset(new juce::AudioProcessorValueTreeState::ComboBoxAttachment(audioProcessor.tree, "mode", comboBox));
 
     addAndMakeVisible(levelSlider);
     addAndMakeVisible(comboBox);

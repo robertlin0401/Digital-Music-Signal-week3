@@ -22,7 +22,6 @@ void SynthVoice::startNote(int midiNoteNumber, float velocity, juce::Synthesiser
     currentAngle = 0.f;
     angleIncrement = frequency / getSampleRate() * juce::MathConstants<float>::twoPi;
     tailOff = 0.0;
-    mode = 1;
 }
 
 void SynthVoice::stopNote(float velocity, bool allowTailOff)
@@ -50,7 +49,7 @@ void SynthVoice::controllerMoved(int controllerNumber, int newControllerValue)
 void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int startSample, int numSamples)
 {
     // sine
-    if (mode == 1) {
+    if (mode == 0) {
         if (tailOff > 0.0) {
             for (int i = startSample; i < (startSample + numSamples); i++) {
                 float value = std::sin(currentAngle) * level * tailOff;
@@ -78,7 +77,7 @@ void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int st
         }
     }
     // square
-    if (mode == 2) {
+    if (mode == 1) {
         if (tailOff > 0.0) {
             for (int i = startSample; i < (startSample + numSamples); i++) {
                 float value = (std::sin(currentAngle) >= 0 ? 1 : -1) * level * tailOff;
@@ -106,7 +105,7 @@ void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int st
         }
     }
     // triangle
-    if (mode == 3) {
+    if (mode == 2) {
         if (tailOff > 0.0) {
             for (int i = startSample; i < (startSample + numSamples); i++) {
                 float value = std::asin(std::sin(currentAngle)) * level * tailOff;
@@ -134,7 +133,7 @@ void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int st
         }
     }
     // sawtooth
-    if (mode == 4) {
+    if (mode == 3) {
         if (tailOff > 0.0) {
             for (int i = startSample; i < (startSample + numSamples); i++) {
                 float value = std::atan(std::tan(currentAngle)) * level * tailOff;
@@ -166,4 +165,9 @@ void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int st
 void SynthVoice::setLevel(float newLevel)
 {
     level = newLevel;
+}
+
+void SynthVoice::setMode(int newMode)
+{
+    mode = newMode;
 }
