@@ -22,6 +22,7 @@ void SynthVoice::startNote(int midiNoteNumber, float velocity, juce::Synthesiser
     currentAngle = 0.f;
     angleIncrement = frequency / getSampleRate() * juce::MathConstants<float>::twoPi;
     tailOff = 0.0;
+    mode = 1;
 }
 
 void SynthVoice::stopNote(float velocity, bool allowTailOff)
@@ -48,29 +49,116 @@ void SynthVoice::controllerMoved(int controllerNumber, int newControllerValue)
 
 void SynthVoice::renderNextBlock(juce::AudioBuffer <float> &outputBuffer, int startSample, int numSamples)
 {
-    if (tailOff > 0.0) {
-        for (int i = startSample; i < (startSample + numSamples); i++) {
-            float value = std::sin(currentAngle) * level * tailOff;
-            outputBuffer.addSample(0, i, value);
-            outputBuffer.addSample(1, i, value);
-            
-            currentAngle += angleIncrement;
-            tailOff *= 0.99;
-            
-            if (tailOff <= 0.05) {
-                clearCurrentNote();
-                angleIncrement = 0.0;
-                level = 0.0;
-                break;
+    // sine
+    if (mode == 1) {
+        if (tailOff > 0.0) {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::sin(currentAngle) * level * tailOff;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+                tailOff *= 0.99;
+                
+                if (tailOff <= 0.05) {
+                    clearCurrentNote();
+                    angleIncrement = 0.0;
+                    level = 0.0;
+                    break;
+                }
+            }
+        } else {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::sin(currentAngle) * level;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
             }
         }
-    } else {
-        for (int i = startSample; i < (startSample + numSamples); i++) {
-            float value = std::sin(currentAngle) * level;
-            outputBuffer.addSample(0, i, value);
-            outputBuffer.addSample(1, i, value);
-            
-            currentAngle += angleIncrement;
+    }
+    // square
+    if (mode == 2) {
+        if (tailOff > 0.0) {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = (std::sin(currentAngle) >= 0 ? 1 : -1) * level * tailOff;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+                tailOff *= 0.99;
+                
+                if (tailOff <= 0.05) {
+                    clearCurrentNote();
+                    angleIncrement = 0.0;
+                    level = 0.0;
+                    break;
+                }
+            }
+        } else {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = (std::sin(currentAngle) >= 0 ? 1 : -1) * level;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+            }
+        }
+    }
+    // triangle
+    if (mode == 3) {
+        if (tailOff > 0.0) {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::asin(std::sin(currentAngle)) * level * tailOff;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+                tailOff *= 0.99;
+                
+                if (tailOff <= 0.05) {
+                    clearCurrentNote();
+                    angleIncrement = 0.0;
+                    level = 0.0;
+                    break;
+                }
+            }
+        } else {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::asin(std::sin(currentAngle)) * level;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+            }
+        }
+    }
+    // sawtooth
+    if (mode == 4) {
+        if (tailOff > 0.0) {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::atan(std::tan(currentAngle)) * level * tailOff;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+                tailOff *= 0.99;
+                
+                if (tailOff <= 0.05) {
+                    clearCurrentNote();
+                    angleIncrement = 0.0;
+                    level = 0.0;
+                    break;
+                }
+            }
+        } else {
+            for (int i = startSample; i < (startSample + numSamples); i++) {
+                float value = std::atan(std::tan(currentAngle)) * level;
+                outputBuffer.addSample(0, i, value);
+                outputBuffer.addSample(1, i, value);
+                
+                currentAngle += angleIncrement;
+            }
         }
     }
 }
