@@ -15,7 +15,7 @@ Week3AudioProcessorEditor::Week3AudioProcessorEditor(Week3AudioProcessor& p)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize(400, 300);
+    setSize(350, 250);
     levelSlider.setSliderStyle(juce::Slider::SliderStyle::LinearHorizontal);
     levelSlider.setValue(0.5);
     levelSlider.setTextBoxStyle(juce::Slider::TextBoxLeft,
@@ -24,7 +24,14 @@ Week3AudioProcessorEditor::Week3AudioProcessorEditor(Week3AudioProcessor& p)
                                 levelSlider.getTextBoxHeight());
     levelSliderAttachment.reset(new juce::AudioProcessorValueTreeState::SliderAttachment(audioProcessor.tree, "level", levelSlider));
     
+    comboBox.addItem("sine", 1);
+    comboBox.addItem("square", 2);
+    comboBox.addItem("triangle", 3);
+    comboBox.addItem("sawtooth", 4);
+    comboBox.setSelectedId(1);
+
     addAndMakeVisible(levelSlider);
+    addAndMakeVisible(comboBox);
 }
 
 Week3AudioProcessorEditor::~Week3AudioProcessorEditor()
@@ -38,11 +45,12 @@ void Week3AudioProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
     g.setColour(juce::Colours::white);
     int x = 50;
-    int y = 100;
+    int y = 50;
     int width = 50;
     int height = levelSlider.getHeight();
     
     g.drawFittedText("Level", x, y, width, height, juce::Justification::centred, 1);
+    g.drawFittedText("Mode", x, y + height, width, height, juce::Justification::centred, 1);
 }
 
 void Week3AudioProcessorEditor::resized()
@@ -51,7 +59,8 @@ void Week3AudioProcessorEditor::resized()
     int sliderWidth = area.getWidth() / 2;
     int sliderHeight = area.getHeight() / 4;
     int x = 100;
-    int y = 100;
+    int y = 50;
     
     levelSlider.setBounds(x, y, sliderWidth, sliderHeight);
+    comboBox.setBounds(x, y + levelSlider.getHeight() + sliderHeight / 4 , sliderWidth, sliderHeight / 2);
 }
